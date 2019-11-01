@@ -14,7 +14,7 @@ export function dealerNameFetchData(vehicles){
       fetch(`https://jlrc.dev.perx.ru/carstock/api/v1/dealers/?id__in=${vehicle.dealer}`)
       .then (response => response.json())
       .then((data) => dealerName = data[0].name)
-      .then(() => vehicle.dealerName = dealerName)
+      .then(() => vehicle.dealerNameFromDealer = dealerName)
       .catch(console.log)
     })
     dispatch(vehiclesFetchDataSuccess(vehicles));

@@ -12,10 +12,11 @@ class Vehicles extends Component {
   constructor(props) {
     super(props);
     this.state = { 
-      currentPage: 1,
+      currentPage: 0,
       perPage: 25,
       totalPages: 0,
-      totalVehicles: 0
+      totalVehicles: 0,
+      dataSource: []
     };
     this.onChangePage = this.onChangePage.bind(this);
   }
@@ -31,17 +32,36 @@ class Vehicles extends Component {
     const totalPages = totalVehicles / perPage;
     this.setState({ totalPages: Number(totalPages) });
 
+    setTimeout(() => {this.getTableData()}, 2000)
   }
 
   onChangePage(pageNumber) {
     const currentPage = pageNumber - 1;
 
     this.props.fetchData(`${baseUrl}/?page=${currentPage}&per_page=${this.state.perPage}&state=active&hidden=false&group=new`)
+
+    setTimeout(() => {this.getTableData()}, 2000)
+  }
+
+  getTableData() {
+    const { vehiclesWithDealer } = this.props;
+
+    const dataTable = 
+      vehiclesWithDealer.map((vehicle) => (
+        {
+          key: vehicle.vin,
+          vin: vehicle.vin,
+          dealerId: vehicle.dealer,
+          dealerName: vehicle.dealerNameFromDealer || 'отсутствует',
+        }
+      ));
+      
+      this.setState({dataSource: dataTable});
   }
 
   render() {
-    const { isFetching, vehiclesWithDealer } = this.props;
-    const { totalVehicles, perPage } = this.state;
+    const { isFetching } = this.props;
+    const { totalVehicles, perPage, dataSource } = this.state;
 
     const columns = [
       {
@@ -60,16 +80,6 @@ class Vehicles extends Component {
         key: 'dealerName',
       },
     ];
-
-    const dataSource = 
-      vehiclesWithDealer.map((vehicle) => (
-        {
-          key: vehicle.vin,
-          vin: vehicle.vin,
-          dealerId: vehicle.dealer,
-          dealerName: vehicle.dealerName,
-        }
-      ));
 
     return (
       <Wrapper>
