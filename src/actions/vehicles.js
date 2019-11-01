@@ -1,8 +1,23 @@
-export function vehiclesFetchDataSuccess(vehicles){
+export function vehiclesFetchDataSuccess(vehiclesWithDealer){
   return {
     type: 'VEHICLES_FETCH_DATA_SUCCESS',
-    vehicles,
+    vehiclesWithDealer,
     isFetching: false
+  }
+}
+
+export function dealerNameFetchData(vehicles){
+  return (dispatch) => {
+    vehicles.forEach( function(vehicle){
+      let dealerName = '';
+
+      fetch(`https://jlrc.dev.perx.ru/carstock/api/v1/dealers/?id__in=${vehicle.dealer}`)
+      .then (response => response.json())
+      .then((data) => dealerName = data[0].name)
+      .then(() => vehicle.dealerName = dealerName)
+      .catch(console.log)
+    })
+    dispatch(vehiclesFetchDataSuccess(vehicles));
   }
 }
 
@@ -10,7 +25,7 @@ export function vehiclesFetchData(url){
   return (dispatch) => {
     fetch(url, {
       headers: {
-        "X-CS-LazyDealer": 1
+        "X-CS-Dealer-Id-Only": 1
       },
     })
       .then(response => {
@@ -28,7 +43,8 @@ export function vehiclesFetchData(url){
         return response;
       })
       .then (response => response.json())
-      .then(vehicles => dispatch(vehiclesFetchDataSuccess(vehicles)))
+      .then(vehicles => dispatch(dealerNameFetchData(vehicles)))
+      // .then(vehicles => dispatch(vehiclesFetchDataSuccess(vehicles)))
       .catch(error => alert(error.message));
   }
 }

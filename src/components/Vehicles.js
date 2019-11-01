@@ -14,8 +14,8 @@ class Vehicles extends Component {
     this.state = { 
       currentPage: 1,
       perPage: 25,
-      totalPages: '',
-      totalVehicles: ''
+      totalPages: 0,
+      totalVehicles: 0
     };
     this.onChangePage = this.onChangePage.bind(this);
   }
@@ -40,7 +40,7 @@ class Vehicles extends Component {
   }
 
   render() {
-    const { isFetching, vehicles } = this.props;
+    const { isFetching, vehiclesWithDealer } = this.props;
     const { totalVehicles, perPage } = this.state;
 
     const columns = [
@@ -62,15 +62,14 @@ class Vehicles extends Component {
     ];
 
     const dataSource = 
-      vehicles.map((vehicle) => (
+      vehiclesWithDealer.map((vehicle) => (
         {
           key: vehicle.vin,
           vin: vehicle.vin,
-          dealerId: vehicle.dealer.id,
-          dealerName: vehicle.dealer.name,
+          dealerId: vehicle.dealer,
+          dealerName: vehicle.dealerName,
         }
-      ))
-    ;
+      ));
 
     return (
       <Wrapper>
@@ -94,7 +93,7 @@ class Vehicles extends Component {
 }
 
 const mapStateToProps = state => ({
-  vehicles: state.vehicles,
+  vehiclesWithDealer: state.vehiclesWithDealer,
   isFetching: Boolean(state.isFetching),
 });
 
