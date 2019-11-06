@@ -6,62 +6,49 @@ import { Wrapper, StyledPagination } from './styled';
 import { connect } from 'react-redux';
 import { vehiclesFetchData } from 'actions/vehicles';
 
-const baseUrl = "https://jlrc.dev.perx.ru/carstock/api/v1/vehicles";
-
 class Vehicles extends Component {
   constructor(props) {
     super(props);
-    this.state = { 
-      currentPage: 0,
-      perPage: 25,
-      totalPages: 0,
-      totalVehicles: 0,
-      dataSource: []
-    };
+    this.state = { dataSource: [] };
     this.onChangePage = this.onChangePage.bind(this);
   }
 
   componentDidMount() {
-    const { currentPage, perPage } = this.state;
-    this.props.fetchData(`${baseUrl}/?page=${currentPage}&per_page=${perPage}&state=active&hidden=false&group=new`)
+    const pageNumber = 1;
+    this.props.fetchData(pageNumber);
 
-    //Получаем количество автомобилей и рассчитываем данные для пагинации
-    const totalVehicles = 2295;
-    this.setState({ totalVehicles: Number(totalVehicles) });
-
-    const totalPages = totalVehicles / perPage;
-    this.setState({ totalPages: Number(totalPages) });
-
-    setTimeout(() => {this.getTableData()}, 2000)
+    this.getTableData();
   }
 
-  onChangePage(pageNumber) {
-    const currentPage = pageNumber - 1;
-
-    this.props.fetchData(`${baseUrl}/?page=${currentPage}&per_page=${this.state.perPage}&state=active&hidden=false&group=new`)
-
-    setTimeout(() => {this.getTableData()}, 2000)
+  shouldComponentUpdate(nextProps, nextState) {
+    return nextProps !== this.props || nextState !== this.state;
   }
 
   getTableData() {
-    const { vehiclesWithDealer } = this.props;
+    const vehiclesArray = Object.values(this.props.vehicles);
 
-    const dataTable = 
-      vehiclesWithDealer.map((vehicle) => (
+    const dataSource = 
+      vehiclesArray.map((vehicle) => (
         {
           key: vehicle.vin,
           vin: vehicle.vin,
           dealerId: vehicle.dealer,
-          dealerName: vehicle.dealerNameFromDealer || 'отсутствует',
+          dealerName: vehicle.dealerName,
         }
       ));
       
-      this.setState({dataSource: dataTable});
+      return dataSource;
+  }
+
+  onChangePage(pageNumber) {
+    this.props.fetchData(pageNumber);
+
+    this.getTableData();
   }
 
   render() {
-    const { isFetching } = this.props;
-    const { totalVehicles, perPage, dataSource } = this.state;
+    const { isFetching, pagination } = this.props;
+    const { totalVehicles, pageSize } = pagination;
 
     const columns = [
       {
@@ -85,31 +72,36 @@ class Vehicles extends Component {
       <Wrapper>
         <h1>Таблица дилеров</h1>
         <Table
-          dataSource={dataSource}
+          dataSource={this.getTableData()}
           columns={columns}
           pagination={false}
           loading={isFetching}
         />
-        <StyledPagination
-          total={totalVehicles}
-          showTotal={total => `Всего автомобилей: ${total}`}
-          pageSize={perPage}
-          defaultCurrent={1}
-          onChange={this.onChangePage}
-        />
+        {!isNaN(pageSize) &&
+          <StyledPagination
+            total={totalVehicles}
+            showTotal={total => `Всего автомобилей: ${total}`}
+            pageSize={pageSize}
+            defaultCurrent={1}
+            onChange={this.onChangePage}
+          />
+        }
       </Wrapper>
     );
   }
 }
 
-const mapStateToProps = state => ({
-  vehiclesWithDealer: state.vehiclesWithDealer,
-  isFetching: Boolean(state.isFetching),
-});
+const mapStateToProps = state => {
+  return { 
+    isFetching: state.isFetching,
+    vehicles: {...state.vehicles},
+    pagination: {...state.pagination},
+  }
+}
 
 const mapDispatchToProps = dispatch => {
   return {
-    fetchData: url => dispatch(vehiclesFetchData(url))
+    fetchData: pageNumber => dispatch(vehiclesFetchData(pageNumber))
   };
 };
 

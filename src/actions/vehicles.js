@@ -1,50 +1,95 @@
-export function vehiclesFetchDataSuccess(vehiclesWithDealer){
-  return {
-    type: 'VEHICLES_FETCH_DATA_SUCCESS',
-    vehiclesWithDealer,
-    isFetching: false
-  }
+const baseUrl = "https://jlrc.dev.perx.ru/carstock/api/v1/";
+const PAGE_SIZE = 25;
+const TOTAL_VEHICLES = 2295;
+const CURRENT_PAGE = 1;
+
+function serializeQuery(query) {
+  return Object.keys(query)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(query[key])}`)
+    .join('&');
 }
 
-export function dealerNameFetchData(vehicles){
-  return (dispatch) => {
-    vehicles.forEach( function(vehicle){
-      let dealerName = '';
+// REQUEST LOADING VEHICLES
+const VEHICLE_INDEX_REQUEST = 'VEHICLE_INDEX_REQUEST';
+const fetchIndexRequest = () => {
+  return {
+    type: VEHICLE_INDEX_REQUEST,
+    data: {
+      isFetching: true,
+      vehicles: [],
+      pagination: {
+        currentPage: CURRENT_PAGE,
+        pageSize: PAGE_SIZE,
+        totalVehicles: TOTAL_VEHICLES,
+      },
+    }
+  };
+};
 
-      fetch(`https://jlrc.dev.perx.ru/carstock/api/v1/dealers/?id__in=${vehicle.dealer}`)
+// VEHICLES RETREIVED WITH SUCCESS
+const VEHICLE_INDEX_SUCCESS = 'VEHICLE_INDEX_SUCCESS';
+const fetchIndexSuccess = payload => {
+  return {
+    type: VEHICLE_INDEX_SUCCESS,
+    data: payload,
+  };
+};
+
+// FAILED TO RETREIVE VEHICLES
+const VEHICLE_INDEX_FAILURE = 'VEHICLE_INDEX_FAILURE';
+const fetchIndexFailure = () => {
+  return {
+    type: VEHICLE_INDEX_FAILURE,
+  };
+};
+
+export function dealerNameFetchData(vehicles, pageNumber){
+  return (dispatch) => {
+
+    vehicles.forEach(function(vehicle){
+      fetch(`${baseUrl}/dealers/?id__in=${vehicle.dealer}`)
       .then (response => response.json())
-      .then((data) => dealerName = data[0].name)
-      .then(() => vehicle.dealerNameFromDealer = dealerName)
+      .then((data) => {
+        if(data.length === 0) {
+          vehicle.dealerNameFromDealer = 'отсутствует'
+        } else {
+          vehicle.dealerNameFromDealer = data[0].name;
+        }
+      })
       .catch(console.log)
     })
-    dispatch(vehiclesFetchDataSuccess(vehicles));
+
+    dispatch(
+      fetchIndexSuccess({
+        isFetching: false,
+        vehicles: vehicles,
+        pagination: {
+          currentPage: pageNumber,
+          pageSize: PAGE_SIZE,
+          totalVehicles: TOTAL_VEHICLES,
+        },
+      })
+    )
   }
 }
 
-export function vehiclesFetchData(url){
-  return (dispatch) => {
-    fetch(url, {
-      headers: {
-        "X-CS-Dealer-Id-Only": 1
-      },
-    })
-      .then(response => {
-        if(!response.ok) {
-          throw new Error(response.statusText);
-        }
-        return response;
-      })
-      .then(response => {
-        console.log(response.status); //=> number 100–599
-        console.log(response.statusText); //=> String
-        console.log(response.headers); //=> Headers
-        console.log(response.url); //=> String
-
-        return response;
+export function vehiclesFetchData(pageNumber) {
+  return (dispatch, getState) => {
+    dispatch(fetchIndexRequest());
+    return fetch(
+      `${baseUrl}/vehicles/?${serializeQuery({
+        page: pageNumber - 1,
+        per_page: PAGE_SIZE,
+        state: 'active',
+        hidden: 'false',
+        group: 'new'
+      })}`, {
+        headers: {
+          "X-CS-Dealer-Id-Only": 1
+        },
       })
       .then (response => response.json())
-      .then(vehicles => dispatch(dealerNameFetchData(vehicles)))
-      // .then(vehicles => dispatch(vehiclesFetchDataSuccess(vehicles)))
-      .catch(error => alert(error.message));
-  }
+      .then(vehicles => dispatch(dealerNameFetchData(vehicles, pageNumber)))
+      .catch(error => dispatch(fetchIndexFailure(error)));
+  };
 }
