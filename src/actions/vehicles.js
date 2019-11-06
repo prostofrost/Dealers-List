@@ -10,12 +10,19 @@ function serializeQuery(query) {
 }
 
 // REQUEST LOADING VEHICLES
+const VEHICLE_FETCHING_FALSE = 'VEHICLE_FETCHING_FALSE';
+const endFetching = () => {
+  return {
+    type: VEHICLE_FETCHING_FALSE,
+  };
+};
+
+// REQUEST LOADING VEHICLES
 const VEHICLE_INDEX_REQUEST = 'VEHICLE_INDEX_REQUEST';
 const fetchIndexRequest = () => {
   return {
     type: VEHICLE_INDEX_REQUEST,
     data: {
-      isFetching: true,
       vehicles: [],
       pagination: {
         currentPage: CURRENT_PAGE,
@@ -69,7 +76,8 @@ export function dealerNameFetchData(vehicles, pageNumber){
           totalVehicles: TOTAL_VEHICLES,
         },
       })
-    )
+    );
+    dispatch(endFetching());
   }
 }
 

@@ -9,7 +9,7 @@ export default function rootReducer(state = [], action) {
             ...state.pagination,
             ...action.data.pagination
           },
-          isFetching: action.data.isFetching,
+          isFetching: true,
         };
     case 'VEHICLE_INDEX_SUCCESS':
       return {
@@ -20,8 +20,13 @@ export default function rootReducer(state = [], action) {
           ...state.pagination,
           ...action.data.pagination
         },
-        isFetching: false,
+        isFetching: true,
       };
+      case 'VEHICLE_FETCHING_FALSE':
+          return {
+            ...state,
+            isFetching: false,
+          };
     default:
       return state;
   }

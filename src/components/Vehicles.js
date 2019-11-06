@@ -93,7 +93,7 @@ class Vehicles extends Component {
 
 const mapStateToProps = state => {
   return { 
-    isFetching: state.isFetching,
+    isFetching: Boolean(state.isFetching),
     vehicles: {...state.vehicles},
     pagination: {...state.pagination},
   }
