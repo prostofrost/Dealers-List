@@ -46,6 +46,12 @@ class Vehicles extends Component {
     this.getTableData();
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.props.isFetching !== prevProps.isFetching) {
+      this.getTableData();
+    }
+  }
+
   render() {
     const { isFetching, pagination } = this.props;
     const { totalVehicles, pageSize } = pagination;

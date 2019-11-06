@@ -52,6 +52,21 @@ const fetchIndexFailure = () => {
 
 export function dealerNameFetchData(vehicles, pageNumber){
   return (dispatch) => {
+    // const dealersId = vehicles.map((vehicle) => {
+    //   return (vehicle.dealer);
+    // });
+
+    // const dealersIdString = dealersId.join(',');
+
+    // fetch(`${baseUrl}/dealers/?id__in=${dealersIdString}`)
+    // .then (response => response.json())
+    // .then((data) => {
+    //   const dealersName = data.map((dealer) => {
+    //     return (dealer.name);
+    //   });
+    //   console.log(dealersName);
+    // })
+    // .catch(console.log)
 
     vehicles.forEach(function(vehicle){
       fetch(`${baseUrl}/dealers/?id__in=${vehicle.dealer}`)
