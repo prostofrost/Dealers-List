@@ -10,20 +10,13 @@ function serializeQuery(query) {
 }
 
 // REQUEST LOADING VEHICLES
-const VEHICLE_FETCHING_FALSE = 'VEHICLE_FETCHING_FALSE';
-const endFetching = () => {
-  return {
-    type: VEHICLE_FETCHING_FALSE,
-  };
-};
-
-// REQUEST LOADING VEHICLES
 const VEHICLE_INDEX_REQUEST = 'VEHICLE_INDEX_REQUEST';
 const fetchIndexRequest = () => {
   return {
     type: VEHICLE_INDEX_REQUEST,
     data: {
       vehicles: [],
+      dealersName: [],
       pagination: {
         currentPage: CURRENT_PAGE,
         pageSize: PAGE_SIZE,
@@ -50,49 +43,85 @@ const fetchIndexFailure = () => {
   };
 };
 
-export function dealerNameFetchData(vehicles, pageNumber){
+export function dealerNameFetchData(data, pageNumber){
   return (dispatch) => {
-    // const dealersId = vehicles.map((vehicle) => {
-    //   return (vehicle.dealer);
-    // });
+    const vehicles = data.map((vehicle) => {
+      return (
+        {
+          key: vehicle.vin,
+          vin: vehicle.vin,
+          dealerId: vehicle.dealer,
+        }
+      );
+    });
 
-    // const dealersIdString = dealersId.join(',');
+    const dealersId = data.map((vehicle) => {
+      return (vehicle.dealer);
+    });
 
-    // fetch(`${baseUrl}/dealers/?id__in=${dealersIdString}`)
-    // .then (response => response.json())
-    // .then((data) => {
-    //   const dealersName = data.map((dealer) => {
-    //     return (dealer.name);
-    //   });
-    //   console.log(dealersName);
-    // })
-    // .catch(console.log)
+    const dealersIdString = dealersId.join(',');
 
-    vehicles.forEach(function(vehicle){
-      fetch(`${baseUrl}/dealers/?id__in=${vehicle.dealer}`)
-      .then (response => response.json())
-      .then((data) => {
-        if(data.length === 0) {
-          vehicle.dealerNameFromDealer = 'отсутствует'
+    fetch(`${baseUrl}/dealers/?id__in=${dealersIdString}`)
+    .then (response => response.json())
+    .then(data => {
+      const dealersName = data.map((dealer) => {
+        return ({
+          dealerId: dealer.id,
+          dealerName: dealer.name
+        });
+      });
+
+      //Находим в dealerName дилера по ID и записываем его название
+      vehicles.forEach(vehicle => {
+        let findName = dealersName.filter(dealer => dealer.dealerId === vehicle.dealerId);
+        if(findName.length === 0) {
+          vehicle.dealerNameFromDealer = 'отсутствует';
         } else {
-          vehicle.dealerNameFromDealer = data[0].name;
+          vehicle.dealerNameFromDealer = findName[0].dealerName;
         }
       })
-      .catch(console.log)
-    })
 
-    dispatch(
-      fetchIndexSuccess({
-        isFetching: false,
-        vehicles: vehicles,
-        pagination: {
-          currentPage: pageNumber,
-          pageSize: PAGE_SIZE,
-          totalVehicles: TOTAL_VEHICLES,
-        },
-      })
-    );
-    dispatch(endFetching());
+      dispatch(
+        fetchIndexSuccess({
+          isFetching: false,
+          vehicles: vehicles,
+          dealersName: dealersName,
+          pagination: {
+            currentPage: pageNumber,
+            pageSize: PAGE_SIZE,
+            totalVehicles: TOTAL_VEHICLES,
+          },
+        })
+      );
+    })
+    // .then(dispatch(endFetching()))
+    .catch(console.log)
+
+    // vehicles.forEach(function(vehicle){
+    //   fetch(`${baseUrl}/dealers/?id__in=${vehicle.dealer}`)
+    //   .then (response => response.json())
+    //   .then((data) => {
+    //     if(data.length === 0) {
+    //       vehicle.dealerNameFromDealer = 'отсутствует'
+    //     } else {
+    //       vehicle.dealerNameFromDealer = data[0].name;
+    //     }
+    //   })
+    //   .catch(console.log)
+    // })
+
+    // dispatch(
+    //   fetchIndexSuccess({
+    //     isFetching: false,
+    //     vehicles: vehicles,
+    //     pagination: {
+    //       currentPage: pageNumber,
+    //       pageSize: PAGE_SIZE,
+    //       totalVehicles: TOTAL_VEHICLES,
+    //     },
+    //   })
+    // );
+    // dispatch(endFetching());
   }
 }
 
@@ -112,7 +141,7 @@ export function vehiclesFetchData(pageNumber) {
         },
       })
       .then (response => response.json())
-      .then(vehicles => dispatch(dealerNameFetchData(vehicles, pageNumber)))
+      .then(data => dispatch(dealerNameFetchData(data, pageNumber)))
       .catch(error => dispatch(fetchIndexFailure(error)));
   };
 }
