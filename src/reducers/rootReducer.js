@@ -9,8 +9,8 @@ export default function rootReducer(state = [], action) {
         vehicles: [
           ...action.data.vehicles
         ],
-        dealersName: [
-          ...action.data.dealersName
+        dealersList: [
+          ...action.data.dealersList
         ],
         pagination: {
           ...state.pagination,

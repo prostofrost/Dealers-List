@@ -14,12 +14,17 @@ class Vehicles extends Component {
   }
 
   componentDidMount() {
+    const dealersList = [];
     const pageNumber = 1;
-    this.props.fetchData(pageNumber);
+
+    this.props.fetchData(pageNumber, dealersList);
   }
 
   onChangePage(pageNumber) {
-    this.props.fetchData(pageNumber);
+    const { dealersList } = this.props;
+    const dealersListArray = Object.values(dealersList);
+
+    this.props.fetchData(pageNumber, dealersListArray);
   }
 
   render() {
@@ -73,13 +78,14 @@ const mapStateToProps = state => {
   return { 
     isFetching: Boolean(state.isFetching),
     vehicles: {...state.vehicles},
+    dealersList: {...state.dealersList},
     pagination: {...state.pagination},
   }
 }
 
 const mapDispatchToProps = dispatch => {
   return {
-    fetchData: pageNumber => dispatch(vehiclesFetchData(pageNumber))
+    fetchData: (pageNumber, dealersList) => dispatch(vehiclesFetchData(pageNumber, dealersList))
   };
 };
 
