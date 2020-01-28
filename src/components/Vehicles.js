@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import { Table } from 'antd';
 
-import { Wrapper, StyledPagination } from './styled';
-
 import { connect } from 'react-redux';
 import { vehiclesFetchData } from 'actions/vehicles';
+
+import { Wrapper, StyledPagination } from './styled';
 
 class Vehicles extends Component {
   constructor(props) {
@@ -14,17 +14,19 @@ class Vehicles extends Component {
   }
 
   componentDidMount() {
+    const { fetchData } = this.props;
+
     const dealersList = [];
     const pageNumber = 1;
 
-    this.props.fetchData(pageNumber, dealersList);
+    fetchData(pageNumber, dealersList);
   }
 
   onChangePage(pageNumber) {
-    const { dealersList } = this.props;
+    const { dealersList, fetchData } = this.props;
     const dealersListArray = Object.values(dealersList);
 
-    this.props.fetchData(pageNumber, dealersListArray);
+    fetchData(pageNumber, dealersListArray);
   }
 
   render() {
@@ -60,15 +62,15 @@ class Vehicles extends Component {
           pagination={false}
           loading={isFetching}
         />
-        {!isNaN(pageSize) &&
-          <StyledPagination
-            total={totalVehicles}
-            showTotal={total => `Всего автомобилей: ${total}`}
-            pageSize={pageSize}
-            defaultCurrent={pagination.currentPage}
-            onChange={this.onChangePage}
-          />
-        }
+        {!isNaN(pageSize) && (
+        <StyledPagination
+          total={totalVehicles}
+          showTotal={total => `Всего автомобилей: ${total}`}
+          pageSize={pageSize}
+          defaultCurrent={pagination.currentPage}
+          onChange={this.onChangePage}
+        />
+)}
       </Wrapper>
     );
   }

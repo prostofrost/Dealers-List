@@ -1,6 +1,6 @@
-const baseUrl = "https://jlrc.dev.perx.ru/carstock/api/v1/";
+const baseUrl = "https://jlrc.dev.perx.ru/carstock/api/v1";
+let TOTAL_VEHICLES = 0;
 const PAGE_SIZE = 25;
-const TOTAL_VEHICLES = 2295;
 const CURRENT_PAGE = 1;
 
 function serializeQuery(query) {
@@ -11,6 +11,25 @@ function serializeQuery(query) {
 
 function diff(a1, a2) {
   return a2.filter(i=>!a1.includes(i))
+}
+
+function getTotalVehicles() {
+
+  return fetch(
+    `${baseUrl}/vehicles/?${serializeQuery({
+      page: '0',
+      per_page: PAGE_SIZE,
+      state: 'active',
+      hidden: 'false',
+      group: 'new'
+    })}`, {
+      headers: {
+        "X-CS-Dealer-Id-Only": 1
+      },
+    })
+    .then(data => {
+      TOTAL_VEHICLES = Number(data.headers.get('x-total-count'))
+    })
 }
 
 // REQUEST LOADING VEHICLES
@@ -58,7 +77,7 @@ export function dealersNameFetchData(data, pageNumber, dealersList) {
       );
     });
 
-    //Сравниваем список вновь полученных ID дилеров для авто с уже имеющимся массивом списка диллеров
+    // Сравниваем список вновь полученных ID дилеров для авто с уже имеющимся массивом списка диллеров
     const dealersId = data.map(vehicle => {
       return (vehicle.dealer);
     });
@@ -69,12 +88,12 @@ export function dealersNameFetchData(data, pageNumber, dealersList) {
 
     const diffArrays = diff(dealersListId, dealersId);
 
-    //Если это не первая страница или совпадений нет, то получаем имена дилеров из уже имеющегоса списка дилеров
+    // Если это не первая страница или совпадений нет, то получаем имена дилеров из уже имеющегося списка дилеров
     if(diffArrays.length === 0 && dealersList.length !== 0){
       const dealersName = dealersList;
-      //Находим в dealersName дилера по ID и записываем его название
+      // Находим в dealersName дилера по ID и записываем его название
       vehicles.forEach(vehicle => {
-        let findName = dealersName.filter(dealer => dealer.dealerId === vehicle.dealerId);
+        const findName = dealersName.filter(dealer => dealer.dealerId === vehicle.dealerId);
 
         if(findName.length === 0) {
           vehicle.dealerNameFromDealer = 'отсутствует';
@@ -86,8 +105,8 @@ export function dealersNameFetchData(data, pageNumber, dealersList) {
       dispatch(
         fetchIndexSuccess({
           isFetching: false,
-          vehicles: vehicles,
-          dealersList: dealersList,
+          vehicles,
+          dealersList,
           pagination: {
             currentPage: pageNumber,
             pageSize: PAGE_SIZE,
@@ -95,30 +114,30 @@ export function dealersNameFetchData(data, pageNumber, dealersList) {
           },
         })
       );
-      //Если страница первая или есть дилеры о которых у нас ещё нет информации, отправляем запрос на сервер
+      // Если страница первая или есть дилеры о которых у нас ещё нет информации, отправляем запрос на сервер
     } else {
       const dealersIdList = () => {
         if(dealersList.length === 0) {
           const dealersIdString = dealersId;
           return dealersIdString;
-        } else {
+        } 
           const dealersIdString = diffArrays;
           return dealersIdString;
-        }
+        
       }
-      const dealersIdString = dealersIdList().join(',');
+      const dealersIdString = dealersIdList().join(',').replace(/,\s*$/, "");
       fetch(`${baseUrl}/dealers/?id__in=${dealersIdString}`)
         .then (response => response.json())
-        .then(data => {
-          const dealersName = data.map((dealer) => {
+        .then(dealers => {
+          const dealersName = dealers.map((dealer) => {
             return ({
               dealerId: dealer.id,
               dealerName: dealer.name
             });
           });
 
-          //Существуют пустые запросы (например https://jlrc.dev.perx.ru/carstock/api/v1/dealers/?id__in=58ab48083ce18b01eaed826e)
-          //Извлекаем информацию о таких запросах и добавляем пустые ID в список дилеров, чтобы лишний раз не срабатывал запрос на сервер          
+          // Существуют пустые запросы (например https://jlrc.dev.perx.ru/carstock/api/v1/dealers/?id__in=58ab48083ce18b01eaed826e)
+          // Извлекаем информацию о таких запросах и добавляем пустые ID в список дилеров, чтобы лишний раз не срабатывал запрос на сервер          
           const dealersNameId = dealersName.map(dealer => {
             return (dealer.dealerId);
           });
@@ -135,12 +154,12 @@ export function dealersNameFetchData(data, pageNumber, dealersList) {
             return list;
           }
 
-          //Собираем массив диллеров
+          // Собираем массив диллеров
           const dealersNameWithEmpties = [...dealersList, ...dealersName, ...emptyArrays()];
 
-          //Находим в dealersName дилера по ID и записываем его название
+          // Находим в dealersName дилера по ID и записываем его название
           vehicles.forEach(vehicle => {
-            let findName = dealersNameWithEmpties.filter(dealer => dealer.dealerId === vehicle.dealerId);
+            const findName = dealersNameWithEmpties.filter(dealer => dealer.dealerId === vehicle.dealerId);
             if(findName.length === 0) {
               vehicle.dealerNameFromDealer = 'отсутствует';
             } else {
@@ -151,7 +170,7 @@ export function dealersNameFetchData(data, pageNumber, dealersList) {
           dispatch(
             fetchIndexSuccess({
               isFetching: false,
-              vehicles: vehicles,
+              vehicles,
               dealersList: dealersNameWithEmpties,
               pagination: {
                 currentPage: pageNumber,
@@ -167,8 +186,9 @@ export function dealersNameFetchData(data, pageNumber, dealersList) {
 }
 
 export function vehiclesFetchData(pageNumber, dealersList) {
-  return (dispatch, getState) => {
+  return (dispatch) => {
     dispatch(fetchIndexRequest());
+    getTotalVehicles();
 
     return fetch(
       `${baseUrl}/vehicles/?${serializeQuery({
@@ -187,3 +207,4 @@ export function vehiclesFetchData(pageNumber, dealersList) {
       .catch(error => dispatch(fetchIndexFailure(error)));
   };
 }
+
