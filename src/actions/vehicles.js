@@ -13,25 +13,6 @@ function diff(a1, a2) {
   return a2.filter(i=>!a1.includes(i))
 }
 
-function getTotalVehicles() {
-
-  return fetch(
-    `${baseUrl}/vehicles/?${serializeQuery({
-      page: '0',
-      per_page: PAGE_SIZE,
-      state: 'active',
-      hidden: 'false',
-      group: 'new'
-    })}`, {
-      headers: {
-        "X-CS-Dealer-Id-Only": 1
-      },
-    })
-    .then(data => {
-      TOTAL_VEHICLES = Number(data.headers.get('x-total-count'))
-    })
-}
-
 // REQUEST LOADING VEHICLES
 const VEHICLE_INDEX_REQUEST = 'VEHICLE_INDEX_REQUEST';
 const fetchIndexRequest = () => {
@@ -188,9 +169,9 @@ export function dealersNameFetchData(data, pageNumber, dealersList) {
 export function vehiclesFetchData(pageNumber, dealersList) {
   return (dispatch) => {
     dispatch(fetchIndexRequest());
-    getTotalVehicles();
+    // getTotalVehicles();
 
-    return fetch(
+    fetch(
       `${baseUrl}/vehicles/?${serializeQuery({
         page: pageNumber - 1,
         per_page: PAGE_SIZE,
@@ -201,6 +182,10 @@ export function vehiclesFetchData(pageNumber, dealersList) {
         headers: {
           "X-CS-Dealer-Id-Only": 1
         },
+      })
+      .then(data => {
+        TOTAL_VEHICLES = Number(data.headers.get('x-total-count'))
+        return data;
       })
       .then (response => response.json())
       .then(data => dispatch(dealersNameFetchData(data, pageNumber, dealersList)))
